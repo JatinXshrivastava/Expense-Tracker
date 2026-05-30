@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="shortcut icon" href="/media/favicons/money-bag.png" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        .navbar {
+            height: 6vh;
+            display: flex;
+            justify-content: space-between;
+            border: 2px solid black;
+            border-radius: 15px;
+            background-color: rgb(128, 0, 160);
+            box-shadow: 0 0 15px rgb(98, 0, 255);
+        }
+
+        #home-btn {
+            font-weight: 700;
+            font-size: xx-large;
+            font-family: Helvetica, sans-serif;
+            display: flex;
+            padding: 0 30px;
+            align-items: center;
+        }
+
+        #logout-btn {
+            font-weight: 500;
+            font-size: x-large;
+            font-family: Helvetica, sans-serif;
+            display: flex;
+            padding: 0 30px;
+            align-items: center;
+        }
+
+        .table-210 {
+            width: 50vw;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            border: 1px solid white;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #333;
+        }
+
+        .main-body {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .transaction-form {
+            width: 25vw;
+            height: 60vh;
+            /* border: 2px solid black; */
+            border-radius: 20px;
+            background-color: #333;
+            box-shadow: 0 0 20px #020202;
+            margin-right: 50px;
+            margin: 100px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .transaction-details {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input,
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 15px;
+            font-family: Helvetica;
+        }
+
+        .transaction-type {
+            margin-top: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .form-ka-dabba {
+            width: 45vw;
+            height: 90vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        a {
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <span id="home-btn">PERSONAL EXPENSE TRACKER</span>
+        <span id="logout-btn"><a href="/login.html" onclick="logout()">Logout</a></span>
+    </nav>
+    <div class="main-body">
+        <div class="table-210">
+            <table id="transaction-table">
+                <tr>
+                    <th>S. no</th>
+                    <th>Amount (in ₹)</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Remarks</th>
+                </tr>
+                <!-- Example row -->
+            </table>
+        </div>
+        <div class="form-ka-dabba">
+            <div class="transaction-form">
+                <div class="transaction-details">
+                    <input type="number" id="amount" placeholder="Amount">
+                    <input type="text" id="category" placeholder="Category">
+                    <input type="date" id="date" placeholder="Date">
+                    <input type="text" id="remarks" placeholder="Remarks">
+                </div>
+                <div class="transaction-type">
+                    <button id="income" onclick="income()"> INCOME </button>
+                    <button id="expense" onclick="expense()"> EXPENSE </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function getTransactions() {
+            const token = localStorage.getItem("token")
+            if( !token ) {
+                alert("Please log in before adding a transaction ")
+                return
+            }
+            const response = await axios.get("http://localhost:3000/transaction" , {
+                headers : {
+                    token
+                } 
+            })
+            const userTransactions = response.data.transactions 
+            const table = document.getElementById("transaction-table")
+            for(let i = 0; i < userTransactions.length ; i++) {
+                const row = table.insertRow()
+                if(userTransactions[i].type === "income") {
+                    row.style.backgroundColor = "green"
+                }else {
+                    row.style.backgroundColor = "red"
+                }
+                row.insertCell(0).textContent = table.rows.length - 1
+                row.insertCell(1).textContent = userTransactions[i].amount
+                row.insertCell(2).textContent = userTransactions[i].category
+                row.insertCell(3).textContent = userTransactions[i].date
+                row.insertCell(4).textContent = userTransactions[i].remarks
+            }
+        }
+        
+        async function income() {
+            const amount = document.getElementById("amount").value
+            const category = document.getElementById("category").value
+            const date = document.getElementById("date").value
+            const remarks = document.getElementById("remarks").value
+            const token = localStorage.getItem("token")
+
+            if (!token) {
+                alert("Please log in before adding a transaction.")
+                return
+            }
+
+            try {
+                await axios.post(
+                    "http://localhost:3000/transaction/income",
+                    { amount, category, date, remarks },
+                    { headers: { token } }
+                )
+                const table = document.getElementById("transaction-table")
+                row.style.backgroundColor = "green"
+                row.insertCell(0).textContent = table.rows.length - 1
+                row.insertCell(1).textContent = amount
+                row.insertCell(2).textContent = category
+                row.insertCell(3).textContent = date
+                row.insertCell(4).textContent = remarks
+                document.getElementById("amount").value = ""
+                document.getElementById("category").value = ""
+                document.getElementById("date").value = ""
+                document.getElementById("remarks").value = ""
+            } catch (error) {
+                console.log(error)
+                alert("Failed to add income transaction")
+            }
+        }
+        async function expense() {
+            const amount = document.getElementById("amount").value
+            const category = document.getElementById("category").value
+            const date = document.getElementById("date").value
+            const remarks = document.getElementById("remarks").value
+            const token = localStorage.getItem("token")
+
+            if (!token) {
+                alert("Please log in before adding a transaction.")
+                return
+            }
+
+            try {
+                await axios.post(
+                    "http://localhost:3000/transaction/expense",
+                    { amount, category, date, remarks },
+                    { headers: { token } }
+                )
+                const table = document.getElementById("transaction-table")
+                const row = table.insertRow()
+                row.style.backgroundColor = "red"
+                row.insertCell(0).textContent = table.rows.length - 1
+                row.insertCell(1).textContent = amount
+                row.insertCell(2).textContent = category
+                row.insertCell(3).textContent = date
+                row.insertCell(4).textContent = remarks
+                document.getElementById("amount").value = ""
+                document.getElementById("category").value = ""
+                document.getElementById("date").value = ""
+                document.getElementById("remarks").value = ""
+            } catch (error) {
+                console.log(error)
+                alert("Failed to add expense transaction")
+            }
+        }
+
+        async function logout() {
+            localStorage.clear("token")
+        }
+        getTransactions()
+    </script>
+</body>
+
+</html>
